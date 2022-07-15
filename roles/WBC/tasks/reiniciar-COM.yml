@@ -1,0 +1,100 @@
+# Reiniciar las COM+ de la aplicacion WBC o SBC en el servidor s129vp
+
+- block:
+   - name: Validar las Components Services (COM+) de la app WBC o SBC
+     win_shell: |      
+       $comAdmin = New-Object -comobject COMAdmin.COMAdminCatalog
+       $apps = $comAdmin.GetCollection("Applications")
+       $apps.Populate();
+       $apps_wbc = $apps | Where-Object {($_.Name -like "wbc*") -or ($_.Name -like "sbc*")}
+       $apps_wbc
+     register: comp_wbc
+
+
+   - name: Listar las COM+ de la applicacion WBC o SBC
+     debug: 
+       var: comp_wbc.stdout_lines
+
+  when: resp.msg is defined 
+  
+
+- block:
+   - name: Detener Components Service (COM+) de la applicacion WBC o SBC
+     win_shell: |
+       $sbc1 = "sbcData"
+       $sbc2 = "sbcLogic"
+       $wbc1 = "wbcData"
+       $wbc2 = "wbcLogic"
+ 
+       $comAdmin = New-Object -comobject COMAdmin.COMAdminCatalog
+       $apps = $comAdmin.GetCollection("Applications")
+       $apps.Populate();
+
+       $comAdmin.ShutdownApplication($sbc1)
+       $comAdmin.ShutdownApplication($sbc2)
+       $comAdmin.ShutdownApplication($wbc1)
+       $comAdmin.ShutdownApplication($wbc2)
+
+     register: stop_com
+    
+   - name: Imprimir Mensaje correcto
+     debug:
+        msg: 
+          - " ¡¡ CORRECTO !! "
+          - "Se detuvieron correctamente los COM+ de WBC o SBC ..."
+
+  rescue:
+   - name: Mensaje de error al detener los COM+ de WBC o SBC
+     fail:
+        msg: |
+         {% if stop_com.stderr.find("No se \r\nencuentra uno de los objetos especificados") != -1 %}  
+          - " ***********   ERROR AL DETENER LOS COM+   *************" 
+          - " Error al reconocer los COM+ de WBC o SBC. No se encuentran los COM+ especificados."
+          - " Para el correcto funcionamiento :"
+          - " Los COM+ de WBC o SBC deben existir y tener los siguientes nombres :'sbcData', 'sbcLogic' , 'wbcData' y 'wbcLogic'."
+          - " Cada COM+ de WBC o SBC , mencionado lineas atras, debe encontrarse activo o en estado RUNNING para el correcto reinicio."
+          - " Favor de validar que las COM+ de WBC o SBC cumplan lo indicado y volver a ejecutar el playbook. "
+         {% endif %}
+         
+
+         {% if stop_com.stderr.find("El proceso \r\ndel servidor no se pudo iniciar debido a que la identidad configurada no es \r\ncorrecta") != -1 %}
+          - "************   ERROR AL DETENER LOS COM+   ************ "
+          - "Favor de validar que el usuario {{ ansible_user }} se encuentre conectado,logueado o en sesion en el servidor {{ SERVER_WBC }}."
+          - "Luego ejecutar nuevamente el playbook."
+         {% endif %}
+          
+
+- block:
+   - name: Iniciar Components Services (COM+) de la applicacion WBC o SBC
+     win_shell: |
+       $sbc1 = "sbcData"
+       $sbc2 = "sbcLogic"
+       $wbc1 = "wbcData"
+       $wbc2 = "wbcLogic"
+    
+       $comAdmin = New-Object -comobject COMAdmin.COMAdminCatalog
+       $apps = $comAdmin.GetCollection("Applications")
+       $apps.Populate();
+
+       $comAdmin.StartApplication($sbc1)
+       $comAdmin.StartApplication($sbc2)
+       $comAdmin.StartApplication($wbc1)
+       $comAdmin.StartApplication($wbc2)
+  
+     register: start_com
+
+   - name: Imprimir Mensaje correcto
+     debug:
+        msg: 
+          - " ¡¡ CORRECTO !! "
+          - "Se reiniciaron correctamente los COM+ de WBC o SBC ..."
+
+  rescue:
+   - name: Mensaje de error al iniciar los COM+ de WBC o SBC  
+     fail:
+        msg: |
+         {% if start_com.stderr.find("El proceso \r\ndel servidor no se pudo iniciar debido a que la identidad configurada no es \r\ncorrecta") != -1 %}
+          - "************   ERROR AL INICIAR LOS COM+   ************ "
+          - "Favor de validar que el usuario {{ ansible_user }} se encuentre conectado,logueado o en sesion en el servidor {{ SERVER_WBC }}."
+          - "Luego ejecutar nuevamente el playbook."
+         {% endif %}         

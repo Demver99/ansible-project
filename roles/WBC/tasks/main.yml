@@ -1,0 +1,11 @@
+---
+# tasks file for WBC
+
+# Detener los applications pool de la aplicacion WBC o SBC
+- include_tasks: detener-appPools.yml
+
+# Reiniciar las COM+ de la aplicacion WBC
+- include_tasks: reiniciar-COM.yml
+
+# Iniciar los applications pool de la aplicacion WBC o SBC
+- include_tasks: iniciar-appPools.yml

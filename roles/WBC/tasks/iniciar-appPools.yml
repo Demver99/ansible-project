@@ -1,0 +1,25 @@
+---
+# tasks file for INICIAR los Application Pools IIS
+
+- block:
+    - name: INICIAR  los Application Pools WBC o SBC
+      win_iis_webapppool:
+        name: "{{ item }}"
+        state: started
+      loop: "{{ app_pools }}"
+      register: start_result
+
+    - name: Imprimir mensaje correcto
+      debug:
+        msg: 
+         - " ¡¡ CORRECTO !! "
+         - " Se inicio  correctamente las applications pools de WBC o SBC ......."
+         - " Se culmino con el W.A de manera correcta , favor de mandar a validar...!!" 
+
+  rescue:
+    - name: Imprimir mensaje de Error 
+      debug:
+        msg: 
+         - " ***** ERROR AL INICIAR LOS APPLICATIONS POOLS ***** "
+         - "Se intento iniciar los applications pools de WBC o SBC sin exito."
+         - "Mensaje de error : {{ start_result.msg }}"

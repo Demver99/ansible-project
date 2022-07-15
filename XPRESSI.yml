@@ -1,0 +1,6 @@
+---
+- name: WorkAround - XPRESSI
+  hosts: "{{ SERVER_XPRESSI }}"
+  gather_facts: false
+  roles:
+   - { role: XPRESSI }

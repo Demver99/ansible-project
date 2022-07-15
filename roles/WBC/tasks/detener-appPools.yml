@@ -1,0 +1,27 @@
+---
+# tasks file for detener los Application Pools IIS
+
+# Nos permite DETENER  los Application Pools IIS de WBC o SBC
+
+- block:
+    - name: Detener los Applications Pools WBC o SBC      
+      win_iis_webapppool:
+        name: "{{ item }}"
+        state: stopped
+      loop: "{{ app_pools }}"
+      register: stop_result
+
+    - name: Imprimir mensaje correcto
+      debug:
+        msg: 
+         - " ¡¡ CORRECTO !! " 
+         - " Se detuvo correctamente las applications pools de WBC o SBC ....."
+      register: resp
+  
+  rescue:     
+    - name: Imprimir Error
+      debug: 
+        msg:
+         - "****** ERROR AL DETENER LAS APPLICATIONS POOLS ******"
+         - "No se detuvo correctamente las applications pool de WBC o SBC."
+         - "Mensaje de error: {{ stop_result.msg }}"

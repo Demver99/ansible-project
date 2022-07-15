@@ -1,0 +1,33 @@
+---
+# tasks file for WIO
+
+- block:
+    - name: Reinicio de servidor WIO - "{{ SERVER_WIO }}"
+      win_reboot:
+        msg: "El servidor se reinicia por motivo de WorkAround  ...."
+        post_reboot_delay: 120
+      register: result
+
+
+    - name: Validar la fecha del ultimo reinicio - "{{ SERVER_WIO }}"
+      win_shell: |
+       $v = (Get-CimInstance -ClassName win32_operatingsystem).lastbootuptime
+       $v
+      register: date_lastreboot
+      when: result.changed  
+   
+    - name:  Reinicio Correcto 
+      debug:
+        msg: 
+          - " ***** ¡¡ REINICIO DE SERVIDOR CORRECTO !! ***** "
+          - " Se culmino de manera correcta con el WorkAround de reinicio de servidor WIO  {{ SERVER_WIO }} "
+          - " Fecha de reinicio  : {{ date_lastreboot.stdout  }} "
+      when: result.changed
+
+  rescue:
+    - name: Reinicio fallido
+      debug:
+        msg:
+          - " **********  ERROR AL REINICIAR EL SERVIDOR {{ SERVER_WIO }} ************ "
+          - " Favor de validar con infraestructura si el servidor {{ SERVER_WIO }} se encuentra activo. "
+          - " De estar el servidor {{ SERVER_WIO }} activo , volver a ejecutar el playbook."

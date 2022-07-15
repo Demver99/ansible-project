@@ -1,0 +1,6 @@
+---
+- name: WorkAround - WBC
+  hosts: "{{ SERVER_WBC }}"
+  gather_facts: false
+  roles:
+   - { role: WBC }
