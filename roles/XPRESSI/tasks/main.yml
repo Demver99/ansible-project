@@ -9,46 +9,57 @@
 
 - name: Imprimir status de los servicios XPRESSI
   debug:
-    var: result_status.stdout_lines
+    msg:
+     - " **** INFORMATIVO **** " 
+     - " Estado actual de los servicios XPRESSI : "
+     - "{{ result_status.stdout_lines }}"
 
 - block: 
     - name: Detener los servicios XPRESSI
       win_shell: |
          Get-Service | Where-Object {($_.Name -eq "{{ xpressi[0] }}") -or ($_.Name -eq "{{ xpressi[1] }}")} | Stop-Service
       register: result_stop
+    
+    - name: Validar status de lo servicios XPRESSI
+      win_shell: |
+         Get-Service | Where-Object {($_.Name -eq "{{ xpressi[0] }}") -or ($_.Name -eq "{{ xpressi[1] }}")} | Select -Property DisplayName,Status
+      register: result_status
 
     - name: Imprimir mensaje correcto
       debug:
-        msg: 
-          - "¡¡ CORRECTO !!"
-          - "Se detuvieron correctamente los servicios XPRESSI ...."
+        msg:  
+         - " ¡¡ CORRECTO !!"
+         - " Estado actual de los servicios XPRESSI : "
+         - "{{ result_status.stdout_lines }}"
+         - " "
+         - " "
+         - " Se detuvieron correctamente los servicios XPRESSI ... "
 
   rescue:
     - name:  Validar el status de los servicios XPRESSI
       win_shell: Get-Service | Where-Object {($_.Name -eq "{{ xpressi[0] }}") -or ($_.Name -eq "{{ xpressi[1] }}")} | Select -Property DisplayName,Status
       register: result_status
 
-    - name: Validar la cantidad de licencias
+    - name: Validar licencias
       win_find:
          paths: "{{ ruta_lic }}"
          file_type: directory
       register: result_licencias
 
 
-    - name: Imprimir el status de los servicios XPRESSI
-      debug:
-        var: result_status.stdout_lines
-    
-    - name: Imprimir cantidad de licencias
-      debug:
-        msg: 
-         - "Se valida que existe {{ result_licencias.files | length }} carpetas temporales de licencias " 
-      
     
     - name: Imprimir mensaje error
-      fail:
-         msg: "¡¡ ERROR !! - No se pudo detener los servicios XPRESSI correctamente y se tiene {{ result_licencias.files | length }} carpetas temporales de licencias . Favor de contactar al analista"
-
+      debug:
+        msg:
+         - " ¡¡ ERROR !! "
+         - " Los servicios XPRESSI no se detuvieron correctamente ."
+         - " Estado actual de los servicios XPRESSI: "
+         - "{{ result_status.stdout_lines }}"
+         - " "  
+         - " Se valida que existe {{ result_licencias.files | length }} carpetas temporales de licencias " 
+         - " Favor de contactar e informar al analista .... "
+    
+    - fail:
          
 
 - block:
@@ -63,38 +74,37 @@
       register: result_status2
     
 
-    - name: Imprimir el status de los servicios XPRESSI
-      debug:
-        var: result_status2.stdout_lines  
-
     - name: Imprimir mensaje correcto
       debug:
         msg:
-           - "¡¡ CORRECTO !!"
-           - "Se iniciaron correctamente los servicios XPRESSI...."
-           - "Se aplico correctamente el WorkAround .Favor de mandar a validar..." 
+           - " ¡¡ CORRECTO !! "
+           - " Se iniciaron correctamente los servicios XPRESSI ...."
+           - "  "
+           - " Estado actual de los servicios XPRESSI : "
+           - "{{ result_status2.stdout_lines }}"
+           - "  "
+           - "  "
+           - " Se aplico correctamente el WorkAround. Favor de mandar a validar ... " 
 
   rescue:
     - name: Validar el status de los servicios XPRESSI
       win_shell: Get-Service | Where-Object {($_.Name -eq "{{ xpressi[0] }}") -or ($_.Name -eq "{{ xpressi[1] }}")} | Select -Property DisplayName,Status
       register: result_status3
     
-    - name: Validar la cantidad de licencias
+    - name: Validar licencias
       win_find:
         paths: "{{ ruta_lic }}"
         file_type: directory
       register: result_licencias2
 
-
-
-    - name: Imprimir el status de los servicios XPRESSI
-      debug:
-        var: result_status3.stdout_lines
-        
     - name: Imprimir mensaje error
       debug:
         msg:
          - " ¡¡ ERROR !! "
          - " No se pudo INICIAR correctamente los servicios XPRESSI ."
-         - " Se valida que existe {{ result_licencias2 | length }} carpetas temporales de  licencias."
-         - " Favor de contactar e informar al analista."
+         - " Estado actual de los servicios XPRESSI : "
+         - "{{ result_status3.stdout_lines }}"
+         - "  "
+         - "  "
+         - " Se valida que existe {{ result_licencias2 | length }} carpetas temporales de licencias. "
+         - " Favor de contactar e informar al analista ....... "
